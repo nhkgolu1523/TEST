@@ -1,0 +1,2165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suvu Xiters Admin</title>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF1A1A;
+            --primary-dark: #CC0000;
+            --primary-light: #FF4D4D;
+            --danger: #FF3B30;
+            --success: #34C759;
+            --bg-dark: #050505;
+            --sidebar-bg: #0c0c0c;
+            --card-bg: #121212;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-dim: #888888;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { background: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; }
+
+        
+        #welcomeScreen {
+            position: fixed; inset: 0; z-index: 99999;
+            background: #000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: 0.8s ease;
+        }
+        #welcomeScreen.hidden { opacity: 0; transform: scale(1.08); pointer-events: none; }
+        #welcomeScreen .ws-glow {
+            position: absolute;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(255,26,26,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: wsPulse 4s ease-in-out infinite;
+        }
+        @keyframes wsPulse { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.3);opacity:0.8} }
+        .ws-container {
+            position: relative; z-index: 1;
+            text-align: center;
+        }
+        .ws-welcome {
+            font-size: clamp(40px, 8vw, 90px);
+            font-weight: 900;
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #fff 0%, #fff 30%, var(--primary-light) 50%, #fff 70%, #fff 100%);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: wsShine 4s ease-in-out infinite;
+            position: relative;
+            display: inline-block;
+            padding: 0 20px;
+        }
+        .ws-welcome::before {
+            content: '';
+            position: absolute;
+            inset: -8px -8px;
+            border: 2px solid rgba(255,26,26,0.15);
+            border-radius: 20px;
+            animation: wsBorder 3s ease-in-out infinite;
+        }
+        @keyframes wsShine {
+            0%{background-position:0% 50%}
+            50%{background-position:100% 50%}
+            100%{background-position:0% 50%}
+        }
+        @keyframes wsBorder {
+            0%,100%{border-color:rgba(255,26,26,0.08)}
+            50%{border-color:rgba(255,26,26,0.3)}
+        }
+        .ws-sub {
+            color: var(--text-dim);
+            font-size: 13px;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            margin-top: 24px;
+            opacity: 0;
+            animation: wsFadeUp 0.8s ease 0.5s forwards;
+        }
+        .ws-loader {
+            margin: 32px auto 0;
+            width: 160px; height: 2px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 4px;
+            overflow: hidden;
+            opacity: 0;
+            animation: wsFadeUp 0.8s ease 1s forwards;
+        }
+        .ws-loader span {
+            display: block; height: 100%; width: 0;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 4px;
+            animation: wsLoad 1.6s ease 1.3s forwards;
+        }
+        @keyframes wsFadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes wsLoad { from{width:0} to{width:100%} }
+
+        
+        #loginPage { 
+            position: fixed; inset: 0;
+            background: #000;
+            display: none; flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 10000; padding: 20px; 
+            overflow: hidden;
+        }
+        #loginPage.show { display: flex; animation: loginFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes loginFadeIn { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
+
+        
+        #bg3dCanvas {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+        }
+        #mouseGlow {
+            position: fixed; width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(255,26,26,0.12) 0%, rgba(255,59,48,0.04) 40%, transparent 70%);
+            border-radius: 50%; pointer-events: none; z-index: 1;
+            transition: transform 0.15s ease-out;
+            will-change: transform;
+        }
+
+        
+        .login-bg-grid {
+            position: fixed; inset: 0; z-index: 0;
+            background-image: 
+                linear-gradient(rgba(255,26,26,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,26,26,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            perspective: 1000px;
+            transform: rotateX(8deg);
+            transform-origin: center bottom;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove {
+            0% { transform: rotateX(8deg) translateY(0); }
+            100% { transform: rotateX(8deg) translateY(60px); }
+        }
+
+        .login-bg-orb {
+            position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; will-change: transform;
+        }
+        .login-bg-orb.o1 {
+            width: 400px; height: 400px;
+            background: rgba(255,26,26,0.08);
+            top: -5%; left: -5%;
+            animation: orbFloat1 12s ease-in-out infinite;
+        }
+        .login-bg-orb.o2 {
+            width: 350px; height: 350px;
+            background: rgba(255,59,48,0.06);
+            bottom: -5%; right: -5%;
+            animation: orbFloat2 15s ease-in-out infinite;
+        }
+        .login-bg-orb.o3 {
+            width: 200px; height: 200px;
+            background: rgba(255,100,100,0.05);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            animation: orbFloat3 10s ease-in-out infinite;
+        }
+        @keyframes orbFloat1 {
+            0%,100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(60px, 40px) scale(1.1); }
+            66% { transform: translate(-30px, 60px) scale(0.9); }
+        }
+        @keyframes orbFloat2 {
+            0%,100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(-50px, -30px) scale(1.15); }
+            66% { transform: translate(40px, -50px) scale(0.85); }
+        }
+        @keyframes orbFloat3 {
+            0%,100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.8; }
+        }
+
+        
+        .perspective-wrap {
+            perspective: 1200px;
+            perspective-origin: 50% 50%;
+            z-index: 2; position: relative;
+            width: 100%; max-width: 420px;
+        }
+
+        .login-card {
+            background: rgba(12,12,12,0.65);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255,59,48,0.15);
+            padding: 44px 40px 40px;
+            border-radius: 32px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            box-shadow: 
+                0 30px 100px rgba(0,0,0,0.5),
+                0 0 80px rgba(255,26,26,0.04),
+                inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+        .login-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 33px;
+            background: linear-gradient(135deg, 
+                rgba(255,26,26,0.3), 
+                rgba(255,26,26,0.05) 30%, 
+                transparent 50%, 
+                rgba(255,59,48,0.08) 70%, 
+                rgba(255,26,26,0.2)
+            );
+            z-index: -1;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            -webkit-mask-composite: xor;
+            padding: 1px;
+            animation: borderGlow 4s ease-in-out infinite;
+        }
+        @keyframes borderGlow {
+            0%,100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        
+        .card-rotating-beam {
+            position: absolute;
+            inset: -3px;
+            border-radius: 35px;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .card-rotating-beam::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 200%;
+            background: linear-gradient(90deg, transparent, rgba(255,26,26,0.4), rgba(255,77,77,0.6), rgba(255,26,26,0.4), transparent);
+            animation: rotateBeam 6s linear infinite;
+        }
+        @keyframes rotateBeam {
+            0% { transform: translateX(-50%) rotate(0deg); }
+            100% { transform: translateX(-50%) rotate(360deg); }
+        }
+
+        .login-card-shine {
+            position: absolute;
+            inset: 0;
+            border-radius: 32px;
+            z-index: -1;
+            background: linear-gradient(135deg, 
+                transparent 0%, 
+                rgba(255,255,255,0.02) 30%, 
+                transparent 50%, 
+                rgba(255,255,255,0.01) 70%, 
+                transparent 100%
+            );
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        
+        
+
+        
+        .login-3d-elements {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            transform-style: preserve-3d;
+        }
+        .login-3d-elements .d3 {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.15;
+        }
+        .login-3d-elements .d3.d3-1 {
+            width: 12px; height: 12px;
+            background: var(--primary-light);
+            top: 15%; right: 12%;
+            animation: d3Float1 6s ease-in-out infinite;
+            transform: translateZ(30px);
+            box-shadow: 0 0 20px rgba(255,26,26,0.3);
+        }
+        .login-3d-elements .d3.d3-2 {
+            width: 8px; height: 8px;
+            background: #fff;
+            bottom: 25%; left: 10%;
+            animation: d3Float2 8s ease-in-out infinite;
+            transform: translateZ(20px);
+        }
+        .login-3d-elements .d3.d3-3 {
+            width: 6px; height: 6px;
+            background: var(--primary);
+            top: 40%; left: 8%;
+            animation: d3Float3 7s ease-in-out infinite;
+            transform: translateZ(40px);
+        }
+        .login-3d-elements .d3.d3-4 {
+            width: 10px; height: 10px;
+            background: #FFD60A;
+            bottom: 30%; right: 10%;
+            animation: d3Float4 9s ease-in-out infinite;
+            transform: translateZ(25px);
+            box-shadow: 0 0 15px rgba(255,214,10,0.2);
+        }
+        .login-3d-elements .d3.d3-5 {
+            width: 4px; height: 4px;
+            background: #fff;
+            top: 60%; left: 50%;
+            animation: d3Float5 5s ease-in-out infinite;
+            transform: translateZ(50px);
+        }
+        @keyframes d3Float1 {
+            0%,100% { transform: translateZ(30px) translate(0, 0); }
+            50% { transform: translateZ(30px) translate(-10px, -15px); }
+        }
+        @keyframes d3Float2 {
+            0%,100% { transform: translateZ(20px) translate(0, 0); }
+            50% { transform: translateZ(20px) translate(12px, 8px); }
+        }
+        @keyframes d3Float3 {
+            0%,100% { transform: translateZ(40px) translate(0, 0); }
+            50% { transform: translateZ(40px) translate(-8px, 12px); }
+        }
+        @keyframes d3Float4 {
+            0%,100% { transform: translateZ(25px) translate(0, 0); }
+            50% { transform: translateZ(25px) translate(8px, -10px); }
+        }
+        @keyframes d3Float5 {
+            0%,100% { transform: translateZ(50px) translate(0, 0); opacity: 0.2; }
+            50% { transform: translateZ(50px) translate(-6px, -6px); opacity: 0.8; }
+        }
+
+        
+        .login-logo-wrap {
+            position: relative;
+            display: inline-block;
+            margin: 0 auto 20px;
+        }
+        .login-logo-circle {
+            width: 100px; height: 100px; border-radius: 50%;
+            overflow: hidden; margin: 0 auto;
+            border: 2px solid rgba(255,59,48,0.35);
+            box-shadow: 0 0 50px rgba(255,26,26,0.2), 0 0 100px rgba(255,26,26,0.06);
+            background: #050505;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            animation: logoPulse 4s ease-in-out infinite;
+        }
+        .login-logo-circle::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,26,26,0.2);
+            animation: logoRing 3s ease-in-out infinite;
+        }
+        @keyframes logoPulse {
+            0%,100%{box-shadow:0 0 50px rgba(255,26,26,0.2),0 0 100px rgba(255,26,26,0.06)}
+            50%{box-shadow:0 0 70px rgba(255,26,26,0.35),0 0 120px rgba(255,26,26,0.12)}
+        }
+        @keyframes logoRing {
+            0%,100%{transform:scale(1);opacity:0.3}
+            50%{transform:scale(1.12);opacity:0.7}
+        }
+        .login-logo-circle img { 
+            width: 100%; height: 100%; 
+            object-fit: cover;
+            object-position: center 60%;
+            border-radius: 50%;
+        }
+
+        
+        .login-brand {
+            transform: translateZ(15px);
+            margin-bottom: 6px;
+        }
+        .login-brand h1 {
+            font-size: 30px;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+        .login-brand h1 .brand-main {
+            background: linear-gradient(135deg, #fff 30%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .login-brand h1 .brand-accent {
+            -webkit-text-fill-color: var(--danger);
+            background: none;
+        }
+        .login-brand .brand-sub {
+            color: rgba(255,255,255,0.6);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            margin-top: 2px;
+            display: block;
+        }
+
+        
+        .login-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 22px 0 24px;
+            transform: translateZ(5px);
+        }
+        .login-divider::before,
+        .login-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,59,48,0.2), transparent);
+        }
+        .login-divider span {
+            color: rgba(255,255,255,0.6);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        
+        .pass-wrapper {
+            position: relative;
+        }
+        .login-input { 
+            width: 100%; padding: 14px 50px 14px 18px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            color: white;
+            outline: none;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: normal;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .login-input::placeholder { 
+            color: rgba(255,255,255,0.2);
+            letter-spacing: normal;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .login-input:focus { 
+            border-color: var(--danger); 
+            box-shadow: 0 0 30px rgba(255,26,26,0.1), inset 0 0 20px rgba(255,26,26,0.03);
+            background: rgba(0,0,0,0.7);
+            transform: scale(1.01);
+        }
+        .login-input:focus ~ .input-glow {
+            opacity: 1;
+        }
+        .input-glow {
+            position: absolute;
+            inset: -2px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255,26,26,0.1), transparent, rgba(255,26,26,0.05));
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+        .pass-toggle {
+            position: absolute; right: 14px; top: 50%;
+            transform: translateY(-50%) translateY(-7px);
+            background: none; border: none;
+            color: rgba(255,255,255,0.2);
+            cursor: pointer; font-size: 15px; padding: 6px;
+            transition: 0.3s;
+            line-height: 1;
+        }
+        .pass-toggle:hover { color: rgba(255,255,255,0.6); }
+
+        
+        .login-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 16px 0 22px;
+            transform: translateZ(8px);
+        }
+        .forgot-link {
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.3s;
+            cursor: default;
+        }
+        .forgot-link:hover { color: rgba(255,59,48,0.5); }
+        .remember-row {
+            display: flex; align-items: center;
+            gap: 8px;
+        }
+        .remember-row input[type=checkbox] {
+            display: none;
+        }
+        .remember-row .check-custom {
+            width: 18px; height: 18px;
+            border-radius: 5px;
+            border: 1.5px solid rgba(255,255,255,0.12);
+            background: rgba(0,0,0,0.3);
+            cursor: pointer;
+            position: relative;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+        .remember-row .check-custom::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 10px;
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            opacity: 0;
+            transition: 0.3s;
+            transform: scale(0);
+        }
+        .remember-row input:checked + .check-custom {
+            background: var(--danger);
+            border-color: var(--danger);
+            box-shadow: 0 0 12px rgba(255,26,26,0.3);
+        }
+        .remember-row input:checked + .check-custom::after {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .remember-row label {
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: 0.3s;
+        }
+        .remember-row label:hover { color: rgba(255,255,255,0.75); }
+
+
+
+        
+        .login-err {
+            color: var(--danger);
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: none;
+            padding: 10px 16px;
+            background: rgba(255,59,48,0.06);
+            border: 1px solid rgba(255,59,48,0.12);
+            border-radius: 10px;
+            transform: translateZ(5px);
+            animation: errShake 0.4s ease;
+        }
+        @keyframes errShake {
+            0%,100% { transform: translateZ(5px) translateX(0); }
+            25% { transform: translateZ(5px) translateX(-6px); }
+            75% { transform: translateZ(5px) translateX(6px); }
+        }
+
+        
+        .btn-unlock {
+            --h-button: 48px;
+            --round: 0.75rem;
+            cursor: pointer;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: all 0.25s ease;
+            background: radial-gradient(
+                65.28% 65.28% at 50% 100%,
+                rgba(255, 77, 77, 0.8) 0%,
+                rgba(255, 77, 77, 0) 100%
+            ),
+            linear-gradient(0deg, #cc0000, #cc0000);
+            border-radius: var(--round);
+            border: none;
+            outline: none;
+            width: 100%;
+            padding: 14px 18px;
+        }
+        .btn-unlock::before,
+        .btn-unlock::after {
+            content: "";
+            position: absolute;
+            inset: var(--space);
+            transition: all 0.5s ease-in-out;
+            border-radius: calc(var(--round) - var(--space));
+            z-index: 0;
+        }
+        .btn-unlock::before {
+            --space: 1px;
+            background: linear-gradient(
+                177.95deg,
+                rgba(255, 255, 255, 0.19) 0%,
+                rgba(255, 255, 255, 0) 100%
+            );
+        }
+        .btn-unlock::after {
+            --space: 2px;
+            background: radial-gradient(
+                65.28% 65.28% at 50% 100%,
+                rgba(255, 77, 77, 0.8) 0%,
+                rgba(255, 77, 77, 0) 100%
+            ),
+            linear-gradient(0deg, #cc0000, #cc0000);
+        }
+        .btn-unlock:active {
+            transform: scale(0.95);
+        }
+        .btn-unlock:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        
+        .btn-unlock .fold {
+            z-index: 1;
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 1rem;
+            width: 1rem;
+            display: inline-block;
+            transition: all 0.5s ease-in-out;
+            background: radial-gradient(
+                100% 75% at 55%,
+                rgba(255, 77, 77, 0.8) 0%,
+                rgba(255, 77, 77, 0) 100%
+            );
+            box-shadow: 0 0 3px rgba(0,0,0,0.3);
+            border-bottom-left-radius: 0.5rem;
+            border-top-right-radius: var(--round);
+        }
+        .btn-unlock .fold::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150%;
+            height: 150%;
+            transform: rotate(45deg) translateX(0%) translateY(-18px);
+            background-color: #0a0a0a;
+            pointer-events: none;
+        }
+        .btn-unlock:hover .fold {
+            margin-top: -1rem;
+            margin-right: -1rem;
+        }
+
+        
+        .btn-unlock .points_wrapper {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            position: absolute;
+            z-index: 1;
+        }
+        .btn-unlock .points_wrapper .point {
+            bottom: -10px;
+            position: absolute;
+            animation: floating-points infinite ease-in-out;
+            pointer-events: none;
+            width: 2px;
+            height: 2px;
+            background-color: rgba(255,255,255,0.6);
+            border-radius: 9999px;
+        }
+        @keyframes floating-points {
+            0% { transform: translateY(0); }
+            85% { opacity: 0; }
+            100% { transform: translateY(-55px); opacity: 0; }
+        }
+        .btn-unlock .points_wrapper .point:nth-child(1) { left: 10%; opacity: 1; animation-duration: 2.35s; animation-delay: 0.2s; }
+        .btn-unlock .points_wrapper .point:nth-child(2) { left: 30%; opacity: 0.7; animation-duration: 2.5s; animation-delay: 0.5s; }
+        .btn-unlock .points_wrapper .point:nth-child(3) { left: 25%; opacity: 0.8; animation-duration: 2.2s; animation-delay: 0.1s; }
+        .btn-unlock .points_wrapper .point:nth-child(4) { left: 44%; opacity: 0.6; animation-duration: 2.05s; }
+        .btn-unlock .points_wrapper .point:nth-child(5) { left: 50%; opacity: 1; animation-duration: 1.9s; }
+        .btn-unlock .points_wrapper .point:nth-child(6) { left: 75%; opacity: 0.5; animation-duration: 1.5s; animation-delay: 1.5s; }
+        .btn-unlock .points_wrapper .point:nth-child(7) { left: 88%; opacity: 0.9; animation-duration: 2.2s; animation-delay: 0.2s; }
+        .btn-unlock .points_wrapper .point:nth-child(8) { left: 58%; opacity: 0.8; animation-duration: 2.25s; animation-delay: 0.2s; }
+        .btn-unlock .points_wrapper .point:nth-child(9) { left: 98%; opacity: 0.6; animation-duration: 2.6s; animation-delay: 0.1s; }
+        .btn-unlock .points_wrapper .point:nth-child(10) { left: 65%; opacity: 1; animation-duration: 2.5s; animation-delay: 0.2s; }
+
+        
+        .btn-unlock .inner {
+            z-index: 2;
+            gap: 4px;
+            position: relative;
+            width: 100%;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            line-height: 1.5;
+            transition: color 0.2s ease-in-out;
+        }
+        .btn-unlock .inner .btn-icon {
+            font-size: 16px;
+            transition: all 0.4s ease;
+            position: relative;
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            margin-left: -6px;
+        }
+        .btn-unlock .inner .btn-icon .icon-lock,
+        .btn-unlock .inner .btn-icon .icon-unlock {
+            position: absolute;
+            left: 40%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .btn-unlock .inner .btn-icon .icon-unlock {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5) rotate(-30deg);
+        }
+        .btn-unlock:hover .inner .btn-icon .icon-lock {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5) rotate(30deg);
+        }
+        .btn-unlock:hover .inner .btn-icon .icon-unlock {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        }
+
+        
+        .login-footer-text {
+            margin-top: 24px;
+            color: rgba(255,255,255,0.6);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transform: translateZ(5px);
+        }
+
+        
+        .dashboard { display: none; height: 100vh; width: 100vw; }
+
+        
+        aside { 
+            width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 30px 20px; flex-shrink: 0;
+        }
+        .logo { font-size: 24px; font-weight: 800; margin-bottom: 50px; padding-left: 10px; }
+        .logo span { color: var(--danger); }
+
+        .nav-menu { flex: 1; }
+        .nav-link { 
+            display: flex; align-items: center; gap: 15px; padding: 15px 20px; 
+            color: var(--text-dim); text-decoration: none; border-radius: 12px; 
+            margin-bottom: 8px; cursor: pointer; transition: 0.3s; font-weight: 600;
+        }
+        .nav-link i { font-size: 18px; width: 25px; }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-link.active { background: var(--primary); color: white; box-shadow: 0 10px 20px rgba(255,26,26,0.3); }
+
+        .sidebar-footer { 
+            padding-top: 20px; 
+            border-top: 1px solid var(--border);
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+
+        
+        main { flex: 1; overflow-y: auto; background: var(--bg-dark); position: relative; }
+        
+        .top-bar {
+            position: sticky; top: 0; background: rgba(5,5,5,0.8); backdrop-filter: blur(10px);
+            padding: 20px 40px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; z-index: 100;
+        }
+        .page-title { font-size: 20px; font-weight: 700; }
+        .status-pill { 
+            display: flex; align-items: center; gap: 8px; background: #111;
+            padding: 8px 16px; border-radius: 50px; font-size: 11px; font-weight: 800;
+            border: 1px solid var(--border);
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transform: translateY(2px); 
+        }
+
+        .content-body { padding: 40px; max-width: 1400px; margin: 0 auto; }
+
+        
+        #userList { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 20px; 
+        }
+
+        
+        .card-flip-wrapper {
+            perspective: 1200px;
+            height: 220px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .card-flip-wrapper.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 18px;
+            padding: 22px;
+            border: 1px solid var(--border);
+            box-sizing: border-box;
+            background: var(--card-bg);
+        }
+        .card-front {
+            cursor: pointer;
+            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        .card-front:hover {
+            border-color: rgba(255,255,255,0.18);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+        }
+        .card-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg, #1a0a0a 0%, #0e0e0e 100%);
+            border-color: rgba(255,26,26,0.25);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+
+        
+        .card-corner-anim {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 40px;
+            height: 40px;
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .card-corner-anim.show { opacity: 1; }
+        .card-corner-anim .c-corner {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        .card-corner-anim .c-corner::before,
+        .card-corner-anim .c-corner::after {
+            content: '';
+            position: absolute;
+            border-radius: 2px;
+        }
+        .card-corner-anim .c-corner::before {
+            top: 0;
+            right: 0;
+            width: 18px;
+            height: 3px;
+        }
+        .card-corner-anim .c-corner::after {
+            top: 0;
+            right: 0;
+            width: 3px;
+            height: 18px;
+        }
+        .card-corner-anim.golden .c-corner::before,
+        .card-corner-anim.golden .c-corner::after {
+            background: #FFD60A;
+            box-shadow: 0 0 10px #FFD60A, 0 0 20px rgba(255,214,10,0.3);
+        }
+        .card-corner-anim.red .c-corner::before,
+        .card-corner-anim.red .c-corner::after {
+            background: var(--primary-light);
+            box-shadow: 0 0 10px rgba(255,26,26,0.6), 0 0 20px rgba(255,26,26,0.2);
+        }
+        .card-corner-anim .c-dot {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: cOrbit 3s ease-in-out infinite;
+        }
+        .card-corner-anim.golden .c-dot {
+            background: #FFD60A;
+            box-shadow: 0 0 12px #FFD60A;
+        }
+        .card-corner-anim.red .c-dot {
+            background: var(--primary-light);
+            box-shadow: 0 0 12px rgba(255,26,26,0.8);
+        }
+        .card-corner-anim .c-glow {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            filter: blur(20px);
+            opacity: 0.3;
+            animation: cPulse 2s ease-in-out infinite;
+        }
+        .card-corner-anim.golden .c-glow { background: #FFD60A; }
+        .card-corner-anim.red .c-glow { background: var(--primary); }
+        @keyframes cOrbit {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(16px, 0); }
+            50% { transform: translate(16px, 16px); }
+            75% { transform: translate(0, 16px); }
+        }
+        @keyframes cPulse {
+            0%, 100% { transform: scale(1); opacity: 0.2; }
+            50% { transform: scale(1.3); opacity: 0.4; }
+        }
+
+        
+        .card-gold-top .card-front { border-top: 2px solid rgba(255,214,10,0.5) !important; animation: goldPulse 4s ease-in-out infinite; }
+        .card-red-top .card-front { border-top: 2px solid rgba(255,26,26,0.5) !important; animation: redPulse 4s ease-in-out infinite; }
+        @keyframes goldPulse { 0%,100%{border-top-color:rgba(255,214,10,0.25)} 50%{border-top-color:rgba(255,214,10,0.7)} }
+        @keyframes redPulse { 0%,100%{border-top-color:rgba(255,26,26,0.25)} 50%{border-top-color:rgba(255,26,26,0.7)} }
+
+        
+        .vip-crown { font-size: 26px; line-height: 1; margin-bottom: 5px; filter: drop-shadow(0 0 8px #FFD60A); text-align:center; }
+        .vip-text {
+            font-size: 24px; font-weight: 800; letter-spacing: 5px;
+            background: linear-gradient(135deg, #FFD60A 0%, #FF9500 50%, #FFD60A 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            font-family: 'Plus Jakarta Sans', sans-serif; text-align:center;
+        }
+        .vip-sub { font-size: 10px; color: rgba(255,213,10,0.45); font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-top: 3px; text-align:center; }
+
+        
+        .countdown-user-name { font-size: 11px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; text-align:center; }
+        .countdown-segments { display: flex; justify-content: center; gap: 6px; }
+        .seg { background: rgba(255,26,26,0.1); border: 1px solid rgba(255,26,26,0.2); border-radius: 8px; padding: 8px 10px; min-width: 50px; text-align: center; }
+        .seg-num { font-size: 18px; font-weight: 800; color: var(--primary); font-family: monospace; line-height: 1; }
+        .seg-label { font-size: 9px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+        .expired-tag { font-size: 14px; font-weight: 800; color: var(--danger); letter-spacing: 2px; text-align:center; }
+        .back-hint { font-size: 10px; color: rgba(255,255,255,0.18); font-weight: 600; margin-top: 12px; text-align:center; }
+
+        .user-card { 
+            background: var(--card-bg); border-radius: 18px; padding: 24px; 
+            border: 1px solid var(--border); transition: 0.3s;
+        }
+        .user-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-5px); }
+        
+        .card-header { display: flex; align-items: center; margin-bottom: 20px; }
+        .card-header .user-info { flex: 1; min-width: 0; }
+        .user-info h3 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+        .user-info p { font-size: 13px; color: var(--text-dim); }
+        
+        .badge { 
+            font-size: 10px; 
+            padding: 4px 8px;   
+            line-height: 1;      
+            height: fit-content; 
+            border-radius: 4px;  
+            font-weight: 800; 
+            text-transform: uppercase;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .badge-active { background: rgba(52, 199, 89, 0.1); color: var(--success); }
+        .badge-blocked { background: rgba(255, 59, 48, 0.1); color: var(--danger); }
+
+        
+        .copy-btn {
+            padding: 3px 5px;
+            top: -11px;
+            background: rgba(255,26,26,0.1);
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .copy-btn:hover {
+            background: rgba(255,26,26,0.2);
+        }
+        .copy-btn .copy-text {
+            color: rgba(255,255,255,0.7);
+            font-weight: 700;
+            font-size: 9px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .copy-btn .copy-icon {
+            font-size: 9px;
+            color: rgba(255,255,255,0.5);
+        }
+        .copy-btn:hover .copy-text,
+        .copy-btn:hover .copy-icon {
+            color: #fff;
+        }
+        .copy-btn.copied {
+            background: rgba(255,26,26,0.2);
+        }
+        .copy-btn.copied .copy-text { color: var(--primary-light); }
+        .copy-btn.copied .copy-icon { color: var(--primary-light); }
+        .badge { position: relative; top: -11px; }
+
+        .hwid-tag { 
+            background: #000; padding: 10px; border-radius: 8px; font-family: monospace;
+            font-size: 11px; color: #555; margin-bottom: 20px; border: 1px solid #111;
+        }
+
+        .card-actions { display: flex; gap: 10px; }
+        .btn-action { 
+            flex: 1; padding: 10px; border-radius: 8px; border: none; 
+            font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .btn-ban { background: rgba(255, 255, 255, 0.05); color: white; }
+        .btn-res { background: rgba(255, 255, 255, 0.05); color: white; }
+        .btn-del { background: rgba(255, 59, 48, 0.1); color: var(--danger); width: 45px; flex: none; }
+        .btn-action:hover { filter: brightness(1.5); }
+
+        
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-container { 
+            background: var(--card-bg); padding: 40px; border-radius: 24px; 
+            border: 1px solid var(--border); max-width: 600px; margin: 0 auto;
+        }
+        label { display: block; margin-bottom: 10px; font-size: 13px; color: var(--text-dim); font-weight: 600; }
+        input, select, textarea { 
+            width: 100%; padding: 14px; background: #000; border: 1px solid var(--border); 
+            border-radius: 12px; color: white; margin-bottom: 20px; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); }
+        .btn-submit { 
+            width: 100%; padding: 16px; border-radius: 12px; border: none; 
+            background: var(--primary); color: white; font-weight: 800; cursor: pointer; 
+        }
+        .btn-submit:hover {
+            opacity: 0.92;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255,26,26,0.2);
+        }
+        .btn-submit:active { transform: translateY(0); }
+
+        
+        #toast { 
+            position: fixed; top: 24px; right: 24px;
+            background: linear-gradient(135deg, #1a1a1a, #111);
+            color: #fff;
+            padding: 14px 26px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 14px;
+            transform: translateX(120%) scale(0.95);
+            transition: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 11000;
+            border: 1px solid rgba(255,26,26,0.15);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #toast.active { transform: translateX(0) scale(1); }
+        #toast i { color: var(--primary); font-size: 16px; }
+
+        .kill-switch-card {
+            background: linear-gradient(135deg, rgba(255,59,48,0.1) 0%, rgba(0,0,0,0) 100%);
+            border: 1px solid rgba(255,59,48,0.2);
+            padding: 30px; border-radius: 24px; text-align: center;
+        }
+
+        .game-option {
+            display: flex; align-items: center; gap: 15px;
+            background: #000; border: 2px solid var(--border);
+            border-radius: 14px; padding: 16px 20px;
+            cursor: pointer; transition: 0.3s; margin-bottom: 12px;
+        }
+        .game-option:hover { border-color: rgba(255,255,255,0.2); }
+        .game-option.selected { border-color: var(--primary); background: rgba(255,26,26,0.08); }
+        .game-option .game-icon { font-size: 22px; }
+        .game-option .game-label { font-size: 14px; font-weight: 700; color: #fff; }
+        .game-option .game-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+        .game-option .check-circle {
+            margin-left: auto; width: 20px; height: 20px; border-radius: 50%;
+            border: 2px solid #333; display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
+        }
+        .game-option.selected .check-circle { background: var(--primary); border-color: var(--primary); }
+        .game-option.selected .check-circle::after { content: '✓'; font-size: 11px; color: #fff; font-weight: 800; }
+
+        
+        .custom-select {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+            z-index: 10;
+        }
+        .custom-select-trigger {
+            width: 100%;
+            padding: 14px 16px;
+            padding-right: 44px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            user-select: none;
+        }
+        .custom-select-trigger:hover {
+            border-color: rgba(255,255,255,0.15);
+        }
+        .custom-select.open .custom-select-trigger {
+            border-color: var(--primary);
+            box-shadow: 0 0 16px rgba(255,26,26,0.1);
+        }
+        .custom-select-trigger::after {
+            content: '\f078';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            color: var(--text-dim);
+            transition: 0.3s;
+        }
+        .custom-select.open .custom-select-trigger::after {
+            transform: translateY(-50%) rotate(180deg);
+            color: var(--primary);
+        }
+        .custom-select-trigger .cs-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .custom-select-trigger .cs-icon.time { background: rgba(255,26,26,0.12); color: var(--primary-light); }
+        .custom-select-trigger .cs-icon.life { background: rgba(255,213,10,0.12); color: #FFD60A; }
+        .custom-select-trigger .cs-icon.custom { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+        .custom-select-trigger .cs-label { flex: 1; text-align: left; }
+        .custom-select-trigger .cs-value { font-size: 12px; color: var(--text-dim); font-weight: 400; }
+        .custom-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: rgba(20,20,20,0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 6px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px) scale(0.97);
+            transition: 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        .custom-select.open .custom-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+        .custom-option {
+            padding: 12px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-dim);
+            font-weight: 600;
+            font-size: 14px;
+            position: relative;
+        }
+        .custom-option:hover { background: rgba(255,255,255,0.04); color: #fff; }
+        .custom-option.selected { background: rgba(255,26,26,0.08); color: #fff; }
+        .custom-option.selected::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--primary);
+        }
+        .custom-option .co-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .custom-option .co-icon.time { background: rgba(255,26,26,0.1); color: var(--primary-light); }
+        .custom-option .co-icon.life { background: rgba(255,213,10,0.1); color: #FFD60A; }
+        .custom-option .co-icon.custom-opt { background: rgba(255,255,255,0.04); color: var(--text-dim); }
+        .custom-option .co-info { flex: 1; }
+        .custom-option .co-title { font-size: 14px; font-weight: 700; color: #fff; }
+        .custom-option .co-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; font-weight: 400; }
+        .custom-dropdown::-webkit-scrollbar { width: 4px; }
+        .custom-dropdown::-webkit-scrollbar-track { background: transparent; }
+        .custom-dropdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+        
+        .hamburger {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: white;
+            font-size: 18px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 998;
+        }
+        .sidebar-overlay.open { display: block; }
+
+        @media (max-width: 768px) {
+            body { overflow: auto; }
+            .dashboard { flex-direction: column; height: auto; min-height: 100vh; }
+            aside {
+                position: fixed; top: 0; left: -300px; width: 260px; height: 100vh;
+                z-index: 999; transition: left 0.3s ease; overflow-y: auto;
+            }
+            aside.open { left: 0; }
+            main { width: 100%; }
+            .top-bar { padding: 14px 16px; position: sticky; top: 0; }
+            .hamburger { display: block; }
+            .content-body { padding: 16px; }
+            #userList { grid-template-columns: 1fr; gap: 14px; }
+            .user-card { padding: 16px; }
+            .card-front, .card-back { padding: 16px; }
+            .card-flip-wrapper { height: 235px; }
+            .countdown-segments { gap: 4px; }
+            .seg { min-width: 44px; padding: 7px 6px; }
+            .seg-num { font-size: 16px; }
+            .form-container { padding: 20px; }
+            #master > div { grid-template-columns: 1fr !important; }
+            .login-card { padding: 28px 20px; }
+            .perspective-wrap { max-width: 360px; }
+            .login-brand h1 { font-size: 24px; }
+            .login-logo-circle { width: 80px; height: 80px; }
+            .login-footer-text { font-size: 9px; }
+            #toast { top: 14px; right: 14px; left: 14px; text-align: center; justify-content: center; transform: translateY(-120%) scale(0.95); }
+            #toast.active { transform: translateY(0) scale(1); }
+            .card-actions { flex-wrap: wrap; }
+            .btn-action { min-width: 80px; }
+            .logo { font-size: 20px; margin-bottom: 30px; }
+        }
+
+        @media (max-width: 400px) {
+            .content-body { padding: 12px; }
+            .form-container { padding: 16px; }
+            .user-card { padding: 14px; }
+            .top-bar { padding: 12px; }
+            .login-card { padding: 24px 16px; border-radius: 24px; }
+            .perspective-wrap { max-width: 320px; }
+            .login-brand h1 { font-size: 20px; }
+            .login-logo-circle { width: 70px; height: 70px; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
+    </style>
+</head>
+<body>
+
+    <div id="toast"><i class="fa-solid fa-circle-check"></i> <span>Operation Successful</span></div>
+
+    <div id="welcomeScreen">
+        <div class="ws-glow"></div>
+        <div class="ws-container">
+            <div class="ws-welcome">Welcome</div>
+            <div class="ws-sub">Suvu Xiters Control Panel</div>
+            <div class="ws-loader"><span></span></div>
+        </div>
+    </div>
+
+    <div id="loginPage">
+        <canvas id="bg3dCanvas"></canvas>
+        <div class="login-bg-grid"></div>
+        <div class="login-bg-orb o1"></div>
+        <div class="login-bg-orb o2"></div>
+        <div class="login-bg-orb o3"></div>
+        <div id="mouseGlow"></div>
+
+        <div class="perspective-wrap" id="perspectiveWrap">
+            <div class="card-rotating-beam"></div>
+            <div class="login-card" id="loginCard">
+                <div class="login-card-shine" id="cardShine"></div>
+
+                <div class="login-3d-elements">
+                    <div class="d3 d3-1"></div>
+                    <div class="d3 d3-2"></div>
+                    <div class="d3 d3-3"></div>
+                    <div class="d3 d3-4"></div>
+                    <div class="d3 d3-5"></div>
+                </div>
+
+                <div class="login-logo-wrap">
+                    <div class="login-logo-circle">
+                        <img loading="lazy" src="https://i.postimg.cc/3rdzrTKN/Suvu-Xiters-Logo.jpg" alt="Logo">
+                    </div>
+                </div>
+
+                <div class="login-brand">
+                    <h1><span class="brand-main">SUVU</span> <span class="brand-accent">XITERS</span></h1>
+                    <span class="brand-sub">Admin Control Panel</span>
+                </div>
+
+                <div class="login-divider"><span>Secure Access</span></div>
+
+                <div class="pass-wrapper">
+                    <input type="password" id="admKey" class="login-input" placeholder="Enter Access Key" autocomplete="off" onkeydown="if(event.key === 'Enter') login()">
+                    <div class="input-glow"></div>
+                    <button class="pass-toggle" onclick="togglePass()" id="passToggleBtn" type="button">
+                        <i class="fa-solid fa-eye" id="passIcon"></i>
+                    </button>
+                </div>
+
+                <div class="login-options">
+                    <div class="remember-row" style="margin-left:1px;">
+                        <input type="checkbox" id="rememberMe" checked>
+                        <label for="rememberMe" class="check-custom"></label>
+                        <label for="rememberMe">Remember Me</label>
+                    </div>
+                    <a class="forgot-link"><i class="fa-regular fa-circle-question" style="margin-right:4px;"></i>Need Help?</a>
+                </div>
+
+                <div id="loginErr" class="login-err">Incorrect Access Key!</div>
+
+                <button class="btn-unlock" id="loginBtn" onclick="login()">
+                    <div class="fold"></div>
+                    <div class="points_wrapper">
+                        <div class="point"></div><div class="point"></div><div class="point"></div>
+                        <div class="point"></div><div class="point"></div><div class="point"></div>
+                        <div class="point"></div><div class="point"></div><div class="point"></div>
+                        <div class="point"></div>
+                    </div>
+                    <span class="inner">
+                        <span class="btn-icon">
+                            <i class="fa-solid fa-lock icon-lock"></i>
+                            <i class="fa-solid fa-lock-open icon-unlock"></i>
+                        </span>
+                        Access System
+                    </span>
+                </button>
+
+                <div class="login-footer-text">&copy; 2026 Suvu Xiters &bull; All Rights Reserved</div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="sidebar-overlay" id="sideOverlay" onclick="closeSidebar()"></div>
+
+    <div class="dashboard" id="mainLayout">
+        <aside id="sidebar">
+            <div class="logo">SUVU <span>XITERS</span></div>
+            <div class="nav-menu">
+                <div class="nav-link active" onclick="tab('users', this)">
+                    <i class="fa-solid fa-database"></i> <span>User Database</span>
+                </div>
+                <div class="nav-link" onclick="tab('create', this)">
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span>Key Generator</span>
+                </div>
+                <div class="nav-link" onclick="tab('master', this)">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>System Settings</span>
+                </div>
+            </div>
+            <div class="sidebar-footer" style="padding-top: 20px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; line-height: 1;">
+                <div class="dot" id="serverDot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex-shrink: 0; display: inline-block;"></div>
+                <span id="serverStatusText" style="color: var(--text-dim); font-size: 12px; display: inline-block; vertical-align: middle;">Server is now Online</span>
+            </div>
+        </aside>
+
+        <main>
+            <div class="top-bar">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="hamburger" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
+                    <div class="page-title" id="pTitle">User Database</div>
+                </div>
+                <div class="status-pill">
+                    <div class="dot" id="stDot" style="background: var(--success);"></div>
+                    <span id="stText" style="color: var(--success);">ONLINE</span>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <section id="users" class="section active">
+                    <div id="userList"></div>
+                </section>
+
+                <section id="create" class="section">
+                    <div class="form-container">
+                        <h2 style="margin-bottom: 25px;">Generate Access Key</h2>
+                        <label>Identity / Username</label>
+                        <input type="text" id="nu" placeholder="Enter Username">
+                        <label>Security Password</label>
+                        <input type="text" id="np" placeholder="Enter secure password" onkeydown="if(event.key === 'Enter') addKey()">
+                        <label>Access Duration</label>
+                        <div class="custom-select" id="durationSelect">
+                            <div class="custom-select-trigger" onclick="toggleDropdown('durationSelect')">
+                                <div class="cs-icon time"><i class="fa-solid fa-calendar-day"></i></div>
+                                <div class="cs-label">1 Day Access</div>
+                            </div>
+                            <div class="custom-dropdown">
+                                <div class="custom-option selected" data-value="86400000" onclick="selectOption('durationSelect', this)">
+                                    <div class="co-icon time"><i class="fa-solid fa-calendar-day"></i></div>
+                                    <div class="co-info"><div class="co-title">1 Day Access</div><div class="co-sub">24 hour license</div></div>
+                                </div>
+                                <div class="custom-option" data-value="604800000" onclick="selectOption('durationSelect', this)">
+                                    <div class="co-icon time"><i class="fa-solid fa-calendar-week"></i></div>
+                                    <div class="co-info"><div class="co-title">7 Day Access</div><div class="co-sub">One week license</div></div>
+                                </div>
+                                <div class="custom-option" data-value="2592000000" onclick="selectOption('durationSelect', this)">
+                                    <div class="co-icon time"><i class="fa-solid fa-calendar"></i></div>
+                                    <div class="co-info"><div class="co-title">30 Day Access</div><div class="co-sub">Monthly license</div></div>
+                                </div>
+                                <div class="custom-option" data-value="custom" onclick="selectOption('durationSelect', this)">
+                                    <div class="co-icon custom-opt"><i class="fa-solid fa-sliders"></i></div>
+                                    <div class="co-info"><div class="co-title">Custom Duration</div><div class="co-sub">Set your own days</div></div>
+                                </div>
+                                <div class="custom-option" data-value="4102444800000" onclick="selectOption('durationSelect', this)">
+                                    <div class="co-icon life"><i class="fa-solid fa-crown"></i></div>
+                                    <div class="co-info"><div class="co-title">Lifetime Access</div><div class="co-sub">Never expires</div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="number" id="customInput" placeholder="How many days?" style="display:none;">
+                        <button class="btn-submit" onclick="addKey()">DEPLOY KEY NOW</button>
+                    </div>
+                </section>
+
+                <section id="master" class="section">
+
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 0.75fr; gap: 30px; align-items: stretch;">
+
+                        
+                        <div class="form-container" style="margin: 0; display: flex; flex-direction: column; box-sizing: border-box;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i class="fa-solid fa-gamepad" style="color: var(--primary); font-size: 18px;"></i>
+                                <h3 style="font-size: 16px;">Target Game</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 24px;">Select target game for the app.</p>
+                            <div class="game-option selected" id="opt-Max" onclick="selectGame('Max')">
+                                <img loading="lazy" src="https://i.postimg.cc/WbJKdZdw/690191a0b5054_com_dts_freefiremax.png" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+                                <div>
+                                    <div class="game-label">Free Fire Max</div>
+                                    <div class="game-sub">Firebase Value: "Max"</div>
+                                </div>
+                                <div class="check-circle"></div>
+                            </div>
+                            <div class="game-option" id="opt-Global" onclick="selectGame('Global')">
+                                <img loading="lazy" src="https://i.postimg.cc/fT0FVdVC/9baa66a3fb33bfcea3e8b791dee5d1c7.jpg" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+                                <div>
+                                    <div class="game-label">Free Fire Global</div>
+                                    <div class="game-sub">Firebase Value: "Global"</div>
+                                </div>
+                                <div class="check-circle"></div>
+                            </div>
+                            <div style="flex: 1;"></div>
+                            <button class="btn-submit" style="margin-top: 20px;" onclick="saveGame()">
+                                <i class="fa-solid fa-floppy-disk" style="margin-right: 8px;"></i>Save Game Setting
+                            </button>
+                        </div>
+
+                        
+                        <div class="form-container" style="margin: 0; display: flex; flex-direction: column; box-sizing: border-box;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i class="fa-solid fa-rocket" style="color: var(--success); font-size: 18px;"></i>
+                                <h3 style="font-size: 16px;">App Update Manager</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 24px;">Set new version number and download link.</p>
+                            <label>Set Version (number only, e.g. 1)</label>
+                            <input type="number" id="appVersion" placeholder="e.g. 1">
+                            <label>Update Download Link</label>
+                            <input type="text" id="updateLink" placeholder="https://...">
+                            <div style="flex: 1;"></div>
+                            <button class="btn-submit" style="background: var(--success); margin-top: 20px;" onclick="saveUpdate()">
+                                <i class="fa-solid fa-cloud-arrow-up" style="margin-right: 8px;"></i>Push Update Info
+                            </button>
+                        </div>
+
+                        
+                        <div class="form-container" style="margin: 0; display: flex; flex-direction: column; box-sizing: border-box;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i class="fa-solid fa-bullhorn" style="color: #FF9500; font-size: 18px;"></i>
+                                <h3 style="font-size: 16px;">Global Broadcast</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 20px;">Send a message to all active users.</p>
+                            <textarea id="msg" rows="6" placeholder="Write your announcement..." style="flex: 1; resize: none;"></textarea>
+                            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                                <button class="btn-submit" style="background: #222;" onclick="setMsg()">Push Message</button>
+                                <button class="btn-submit" style="background: rgba(255,59,48,0.1); color: var(--danger);" onclick="clearMsg()">Clear</button>
+                            </div>
+                        </div>
+
+                        
+                        <div class="kill-switch-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; height: 100%; box-sizing: border-box;">
+                            <i class="fa-solid fa-circle-exclamation" style="font-size: 40px; color: var(--danger); margin-bottom: 16px;"></i>
+                            <h3 style="font-size: 16px; margin-bottom: 10px;">Master Kill Switch</h3>
+                            <p style="font-size: 13px; color: var(--text-dim); text-align: center; line-height: 1.6; margin-bottom: 24px;">
+                                Instantly disable or enable all client connections globally.
+                            </p>
+                            <button id="killToggleBtn" class="btn-submit" style="width: 100%;" onclick="toggleKill()">FETCHING...</button>
+                        </div>
+
+                    </div>
+
+                </section>
+                
+
+            </div>
+        </main>
+    </div>
+
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script>
+        
+        (function() {
+            const canvas = document.getElementById('bg3dCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let W = canvas.width = window.innerWidth;
+            let H = canvas.height = window.innerHeight;
+            window.addEventListener('resize', () => {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+            });
+
+            const particles = Array.from({length: 80}, () => ({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                z: Math.random() * 300,
+                r: Math.random() * 2 + 0.5,
+                speed: Math.random() * 0.3 + 0.1,
+                opacity: Math.random() * 0.4 + 0.1,
+                hue: Math.random() * 20 + 350
+            }));
+
+            const loginEl = document.getElementById('loginPage');
+            function draw() {
+                if (!loginEl || !loginEl.classList.contains('show')) { setTimeout(draw, 400); return; }
+                ctx.clearRect(0, 0, W, H);
+                particles.forEach(p => {
+                    const scale = 300 / (300 + p.z);
+                    const x2d = (p.x - W/2) * scale + W/2;
+                    const y2d = (p.y - H/2) * scale + H/2;
+                    const r2d = p.r * scale;
+
+                    ctx.beginPath();
+                    ctx.arc(x2d, y2d, r2d, 0, Math.PI * 2);
+                    ctx.fillStyle = `hsla(${p.hue}, 80%, 60%, ${p.opacity * scale})`;
+                    ctx.fill();
+
+                    if (r2d > 1.2) {
+                        ctx.beginPath();
+                        ctx.arc(x2d, y2d, r2d * 2, 0, Math.PI * 2);
+                        ctx.fillStyle = `hsla(${p.hue}, 80%, 60%, ${p.opacity * 0.15 * scale})`;
+                        ctx.fill();
+                    }
+
+                    p.z -= p.speed * 1.2;
+                    if (p.z <= 0) {
+                        p.z = 300;
+                        p.x = Math.random() * W;
+                        p.y = Math.random() * H;
+                    }
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        
+        (function() {
+            const loginPage = document.getElementById('loginPage');
+            const glow = document.getElementById('mouseGlow');
+            if (!loginPage || !glow) return;
+
+            loginPage.addEventListener('mousemove', function(e) {
+                glow.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
+            });
+        })();
+
+        
+        const config = {
+            apiKey: "AIzaSyB0P9nY21WLiE9D8iXo5iWJkRS1e_9JkAs",
+            authDomain: "suvu-xiters-new.firebaseapp.com",
+            databaseURL: "https://suvu-xiters-new-default-rtdb.firebaseio.com",
+            projectId: "suvu-xiters-new",
+            storageBucket: "suvu-xiters-new.firebasestorage.app",
+            messagingSenderId: "66594224601",
+            appId: "1:66594224601:web:be5d9956aeb946cb2301c8"
+        };
+        firebase.initializeApp(config);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        const ADMIN_EMAIL = "admin@suvu.com"; 
+
+        let currentStatus = "0";
+        let selectedGame = "Max"; 
+
+        function togglePass() {
+            const inp = document.getElementById('admKey');
+            const icon = document.getElementById('passIcon');
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                inp.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        
+        let welcomeAudio = null;
+
+        window.addEventListener('load', function() {
+            const saved = localStorage.getItem('adminPass');
+            if (saved) {
+                document.getElementById('admKey').value = saved;
+            }
+
+            try {
+                welcomeAudio = new Audio('https://github.com/Golu1523/files/raw/refs/heads/main/welcome.wav');
+                welcomeAudio.preload = 'auto';
+                welcomeAudio.load();
+            } catch(e) {}
+
+            setTimeout(function() {
+                const ws = document.getElementById('welcomeScreen');
+                ws.classList.add('hidden');
+                setTimeout(function() {
+                    ws.style.display = 'none';
+                    document.getElementById('loginPage').classList.add('show');
+                }, 850);
+            }, 3500);
+        });
+
+        
+        function login() {
+            const pass = document.getElementById('admKey').value;
+            const remember = document.getElementById('rememberMe').checked;
+            const btn = document.getElementById('loginBtn');
+            const errDiv = document.getElementById('loginErr');
+
+            if (!pass) return;
+
+            errDiv.style.display = 'none';
+            btn.querySelector('.inner').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+            btn.disabled = true;
+
+            auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).then(function() {
+                return auth.signInWithEmailAndPassword(ADMIN_EMAIL, pass);
+            }).then(function() {
+                
+                if (remember) {
+                    localStorage.setItem('adminPass', pass);
+                } else {
+                    localStorage.removeItem('adminPass');
+                }
+
+                
+                try {
+                    if (welcomeAudio) {
+                        welcomeAudio.currentTime = 0;
+                        welcomeAudio.volume = 0.5;
+                        welcomeAudio.play().catch(() => {});
+                    } else {
+                        const a = new Audio('https://github.com/Golu1523/files/raw/refs/heads/main/welcome.wav');
+                        a.volume = 0.5; a.play().catch(() => {});
+                    }
+                } catch(e) {}
+
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('mainLayout').style.display = 'flex';
+                sync();
+                show("System Decrypted - Welcome Admin");
+            }).catch(function(error) {
+                errDiv.style.display = 'block';
+                btn.querySelector('.inner').innerHTML = '<i class="fa-solid fa-lock"></i> Access System';
+                btn.disabled = false;
+            });
+        }
+
+        
+        function logout() {
+            localStorage.removeItem('adminPass');
+            auth.signOut().then(function() { location.reload(); });
+        }
+
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sideOverlay').classList.add('open');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sideOverlay').classList.remove('open');
+        }
+
+        
+        function tab(id, el) {
+            document.querySelectorAll('.section').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
+            document.querySelectorAll('.nav-link').forEach(i => i.classList.remove('active'));
+            const sec = document.getElementById(id);
+            if (sec) { sec.classList.add('active'); sec.style.display = 'block'; }
+            el.classList.add('active');
+            document.getElementById('pTitle').innerText = el.innerText.trim();
+            closeSidebar();
+        }
+
+        function toggleCustom(val) {
+            document.getElementById('customInput').style.display = (val === 'custom') ? 'block' : 'none';
+        }
+
+        
+        function toggleDropdown(id) {
+            const el = document.getElementById(id);
+            const wasOpen = el.classList.contains('open');
+            closeAllDropdowns();
+            if (!wasOpen) el.classList.add('open');
+        }
+
+        function selectOption(selectId, optionEl) {
+            const container = document.getElementById(selectId);
+            const val = optionEl.dataset.value;
+            const trigger = container.querySelector('.custom-select-trigger');
+            const label = optionEl.querySelector('.co-title')?.textContent || optionEl.textContent.trim();
+            const iconHtml = optionEl.querySelector('.co-icon')?.innerHTML || '';
+            const iconClass = optionEl.querySelector('.co-icon')?.className.replace('co-icon', 'cs-icon') || '';
+
+            container.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+            optionEl.classList.add('selected');
+
+            const labelEl = trigger.querySelector('.cs-label');
+            let iconEl = trigger.querySelector('.cs-icon');
+            if (iconEl) {
+                iconEl.innerHTML = iconHtml;
+                iconEl.className = iconClass;
+            } else {
+                const newIcon = document.createElement('div');
+                newIcon.className = iconClass;
+                newIcon.innerHTML = iconHtml;
+                trigger.insertBefore(newIcon, labelEl);
+            }
+            labelEl.textContent = label;
+
+            closeAllDropdowns();
+
+            if (selectId === 'durationSelect') toggleCustom(val);
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.custom-select').forEach(el => el.classList.remove('open'));
+        }
+
+        function getSelectValue(id) {
+            const sel = document.getElementById(id);
+            const opt = sel.querySelector('.custom-option.selected');
+            return opt ? opt.dataset.value : null;
+        }
+
+        
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.custom-select')) closeAllDropdowns();
+        });
+
+        
+        function selectGame(val) {
+            selectedGame = val;
+            document.querySelectorAll('.game-option').forEach(el => el.classList.remove('selected'));
+            document.getElementById('opt-' + val).classList.add('selected');
+        }
+
+        function saveGame() {
+            db.ref('Target_Game').set(selectedGame);
+            show("Game set to: " + selectedGame);
+        }
+
+        
+        function saveUpdate() {
+            const ver = document.getElementById('appVersion').value.trim();
+            const link = document.getElementById('updateLink').value.trim();
+            if(!ver || !link) return alert("Version and Update Link are required!");
+            db.ref('Update').update({ version: Number(ver), url: link });
+            show("Update info saved: v" + ver);
+        }
+
+        
+        const countdownTimers = {};
+
+        function formatDate(ms) {
+            if(!ms) return 'N/A';
+            const d = new Date(ms);
+            return d.getDate().toString().padStart(2,'0') + '/' + 
+                   (d.getMonth()+1).toString().padStart(2,'0') + '/' + 
+                   d.getFullYear() + '  ' +
+                   d.getHours().toString().padStart(2,'0') + ':' +
+                   d.getMinutes().toString().padStart(2,'0');
+        }
+
+        function startCountdown(elementId, expiryMs) {
+            if(countdownTimers[elementId]) clearInterval(countdownTimers[elementId]);
+            const LIFETIME = 4102444800000;
+            const backEl = document.getElementById('back_' + elementId);
+            if(!backEl) return;
+
+            const wrap = document.getElementById('wrap_' + elementId);
+
+            if(!expiryMs || expiryMs >= LIFETIME) {
+                backEl.innerHTML = `
+                    <div class="vip-crown">\u{1F451}</div>
+                    <div class="vip-text">PERMANENT</div>
+                    <div class="vip-sub">\u2756 Lifetime Access \u2756</div>`;
+                if (wrap) { wrap.classList.add('card-gold-top'); wrap.classList.remove('card-red-top'); }
+                return;
+            } else {
+                if (wrap) { wrap.classList.add('card-red-top'); wrap.classList.remove('card-gold-top'); }
+            }
+
+            function tick() {
+                const el = document.getElementById('back_' + elementId);
+                if(!el) { clearInterval(countdownTimers[elementId]); return; }
+                const diff = expiryMs - Date.now();
+                if(diff <= 0) {
+                    el.innerHTML = '<div class="expired-tag">\u26a0 LICENSE EXPIRED</div>';
+                    clearInterval(countdownTimers[elementId]);
+                    return;
+                }
+                const days = Math.floor(diff / 86400000);
+                const hrs  = Math.floor((diff % 86400000) / 3600000);
+                const mins = Math.floor((diff % 3600000) / 60000);
+                const secs = Math.floor((diff % 60000) / 1000);
+                el.innerHTML = `
+                    <div class="countdown-user-name"><i class="fa-solid fa-clock" style="margin-right:5px;"></i>Time Remaining</div>
+                    <div class="countdown-segments">
+                        <div class="seg"><div class="seg-num">${String(days).padStart(2,'0')}</div><div class="seg-label">Days</div></div>
+                        <div class="seg"><div class="seg-num">${String(hrs).padStart(2,'0')}</div><div class="seg-label">Hrs</div></div>
+                        <div class="seg"><div class="seg-num">${String(mins).padStart(2,'0')}</div><div class="seg-label">Min</div></div>
+                        <div class="seg"><div class="seg-num">${String(secs).padStart(2,'0')}</div><div class="seg-label">Sec</div></div>
+                    </div>`;
+            }
+            tick();
+            countdownTimers[elementId] = setInterval(tick, 1000);
+        }
+
+        function flipCard(wrapperEl) {
+            wrapperEl.classList.toggle('flipped');
+        }
+
+        
+        function copyCreds(user, pass, btn) {
+            const text = 'User: ' + user + '\nPassword: ' + pass;
+            navigator.clipboard.writeText(text).then(function() {
+                btn.classList.add('copied');
+                btn.querySelector('.copy-text').textContent = 'Copied';
+                btn.querySelector('.copy-icon').className = 'fa-solid fa-check copy-icon';
+            }).catch(function() {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                btn.classList.add('copied');
+                btn.querySelector('.copy-text').textContent = 'Copied';
+                btn.querySelector('.copy-icon').className = 'fa-solid fa-check copy-icon';
+            });
+        }
+
+        
+        function sync() {
+            db.ref('Users').on('value', snap => {
+                
+                Object.keys(countdownTimers).forEach(k => clearInterval(countdownTimers[k]));
+
+                const list = document.getElementById('userList');
+                list.innerHTML = "";
+                snap.forEach(child => {
+                    const u = child.val();
+                    const name = child.key;
+                    const isB = u.status === 'blocked';
+                    const LIFETIME = 4102444800000;
+                    const isPermanent = !u.expiry || u.expiry >= LIFETIME;
+                    const isExpired = !isPermanent && u.expiry < Date.now();
+                    const countdownId = 'cd_' + name.replace(/[^a-zA-Z0-9]/g, '_');
+
+                    
+                    const expiryDisplay = isPermanent ? '♾ PERMANENT' : formatDate(u.expiry);
+                    const expiryClass = isPermanent ? 'license-value permanent' : (isExpired ? 'license-value expired' : 'license-value');
+
+                    list.innerHTML += `
+    <div class="card-flip-wrapper" id="wrap_${countdownId}">
+        <div class="card-corner-anim" id="corner_${countdownId}"><div class="c-corner"></div><div class="c-dot"></div><div class="c-glow"></div></div>
+        <div class="card-inner">
+
+            
+            <div class="card-front" onclick="flipCard(document.getElementById('wrap_${countdownId}'))">
+
+                <div class="card-header" style="margin-bottom: 15px;">
+                    <div class="user-info">
+                        <h3 style="font-size: 16px; margin-bottom: 5px; color: #ffffff; font-weight: 800;">
+                            User: <span style="font-weight: 800;">${name}</span>
+                        </h3>
+                        <p style="font-size: 14px; color: #ffffff; font-weight: 800;">
+                            Password: <span style="font-weight: 800;">${u.password}</span>
+                        </p>
+                    </div>
+                    <button class="copy-btn" onclick="event.stopPropagation();copyCreds('${name.replace(/'/g, "\\'")}', '${u.password.replace(/'/g, "\\'")}', this);return false" onmouseleave="resetCopy(this)">
+                        <i class="fa-regular fa-copy copy-icon"></i>
+                        <span class="copy-text">Copy</span>
+                    </button>
+                    <span class="badge ${isB ? 'badge-blocked' : 'badge-active'}">${u.status}</span>
+                </div>
+                <div class="hwid-tag">HWID: ${u.hwid || 'NOT REGISTERED'}</div>
+                <div class="card-actions">
+                    <button class="btn-action btn-ban" onclick="event.stopPropagation();ban('${name}','${u.status}')">
+                        <i class="fa-solid ${isB?'fa-unlock':'fa-ban'}"></i> ${isB?'Unban':'Ban'}
+                    </button>
+                    <button class="btn-action btn-res" onclick="event.stopPropagation();res('${name}')">Reset HWID</button>
+                    <button class="btn-action btn-del" onclick="event.stopPropagation();del('${name}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+
+            
+            <div class="card-back" onclick="flipCard(document.getElementById('wrap_${countdownId}'))">
+                <div id="back_${countdownId}">
+                    
+                </div>
+
+            </div>
+
+        </div>
+    </div>`;
+                });
+
+                
+                setTimeout(() => {
+                    snap.forEach(child => {
+                        const u = child.val();
+                        const name = child.key;
+                        const countdownId = 'cd_' + name.replace(/[^a-zA-Z0-9]/g, '_');
+                        startCountdown(countdownId, u.expiry);
+                    });
+                }, 50);
+            });
+
+            db.ref('GlobalSettings/status').on('value', s => {
+                currentStatus = s.val() ?? 0;
+                const live = currentStatus == 1;
+                
+                const dot = document.getElementById('stDot');
+                const txt = document.getElementById('stText');
+                const tgl = document.getElementById('killToggleBtn');
+
+                dot.style.background = live ? "var(--success)" : "var(--danger)";
+                txt.innerText = live ? "ONLINE" : "OFFLINE";
+                txt.style.color = live ? "var(--success)" : "var(--danger)";
+
+                tgl.innerText = live ? "DEACTIVATE SYSTEM" : "ACTIVATE SYSTEM";
+                tgl.style.background = live ? "var(--danger)" : "var(--primary)";
+
+                const sideDot = document.getElementById('serverDot');
+                const sideTxt = document.getElementById('serverStatusText');
+
+                if (live) {
+                    sideDot.style.background = "var(--success)";
+                    sideTxt.innerText = "Server is now Online";
+                    sideTxt.style.color = "var(--success)";
+                } else {
+                    sideDot.style.background = "var(--danger)";
+                    sideTxt.innerText = "Server is currently Offline";
+                    sideTxt.style.color = "var(--danger)";
+                }
+            });
+
+            db.ref('Broadcast/message').on('value', snap => {
+                const msgArea = document.getElementById('msg');
+                msgArea.value = snap.val() ? snap.val() : "";
+            });
+
+            
+            db.ref('Target_Game').once('value', snap => {
+                if(snap.val()) selectGame(snap.val());
+            });
+
+            
+            db.ref('Update/version').once('value', snap => {
+                if(snap.val()) document.getElementById('appVersion').value = snap.val();
+            });
+            db.ref('Update/url').once('value', snap => {
+                if(snap.val()) document.getElementById('updateLink').value = snap.val();
+            });
+        }
+
+        
+        function toggleKill() {
+            const nextVal = currentStatus == 1 ? 0 : 1;
+            db.ref('GlobalSettings').update({status: nextVal});
+            show(nextVal === 1 ? "System Activated" : "System Deactivated");
+        }
+
+        function ban(n,s) { 
+            db.ref('Users/'+n).update({status: s==='active'?'blocked':'active'}); 
+            show("Status Updated"); 
+        }
+
+        function res(n) { 
+            db.ref('Users/'+n).update({hwid:""}); 
+            show("Device ID Flushed"); 
+        }
+
+        function del(n) { 
+            if(confirm("Confirm deletion of "+n+"?")) {
+                db.ref('Users/'+n).remove(); 
+                show("Entry Deleted"); 
+            }
+        }
+
+        function addKey() {
+            const u=document.getElementById('nu').value, p=document.getElementById('np').value;
+            const sel = getSelectValue('durationSelect');
+            if(!u || !p) return alert("All fields are required!");
+            let time;
+            if(sel === 'custom') {
+                const days = parseInt(document.getElementById('customInput').value);
+                if(!days) return alert("Enter number of days!");
+                time = days * 86400000;
+            } else { time = parseInt(sel); }
+            
+            db.ref('Users/'+u).set({password:p, status:"active", hwid:"", expiry:Date.now()+time});
+            show("New Access Key Deployed");
+            document.getElementById('nu').value=""; 
+            document.getElementById('np').value=""; 
+            tab('users', document.querySelector('.nav-link'));
+        }
+
+        function setMsg() { 
+            db.ref('Broadcast').update({message: document.getElementById('msg').value}); 
+            show("Broadcast Sent"); 
+        }
+
+        function clearMsg() {
+            if(confirm("Clear broadcast message from server?")) {
+                db.ref('Broadcast').update({message: ""});
+                document.getElementById('msg').value = "";
+                show("Broadcast Cleared");
+            }
+        }
+
+        
+        let toastTimer;
+        function show(m) { 
+            const t=document.getElementById('toast'); 
+            clearTimeout(toastTimer);
+            t.querySelector('span').textContent = m; 
+            t.classList.add('active'); 
+            toastTimer = setTimeout(()=>t.classList.remove('active'),3000); 
+        }
+
+        
+        function resetCopy(btn) {
+            if (btn.classList.contains('copied')) {
+                setTimeout(function() {
+                    btn.classList.remove('copied');
+                    btn.querySelector('.copy-text').textContent = 'Copy';
+                    btn.querySelector('.copy-icon').className = 'fa-regular fa-copy copy-icon';
+                }, 200);
+            }
+        }
+    </script>
+</body>
+</html>
